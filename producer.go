@@ -6,14 +6,16 @@ import (
 	"os"
 )
 
-type Reciever struct {
+type Receiver struct {
 	Name  string
 	Email string
 }
 
-func producer() error {
+func loadRecipient(filePath string, ch chan Receiver) error {
+	// Close channel after sending receivers is done
+	defer close(ch)
 	// Open CSV File
-	f, err := os.Open("mails.csv")
+	f, err := os.Open(filePath)
 	if err != nil {
 		return fmt.Errorf("unable to open file")
 	}
@@ -30,15 +32,14 @@ func producer() error {
 
 	// Read the Records of CSV File
 	if len(records) > 1 {
-		// Read the Records of CSV File (skipping the header at index 0)
 		for _, record := range records[1:] {
-			// ! record is a []string where each element is a column value
-			fmt.Printf("Name: %s, Email: %s\n", record[0], record[1])
-			// TODO: In a real application, you'd populate the Reciever struct here:
-			// r := Reciever{Name: record[0], Email: record[1]}
+			ch <- Receiver{
+				Name: record[0],
+				Email: record[1],
+			}
 		}
 	} else {
-		fmt.Println("CSV file is empty or only contains a header.")
+		return fmt.Errorf("CSV file is empty or only contains a header.")
 	}
 	return nil
 }

@@ -1,12 +1,19 @@
 package main
 
-import (
-	"log"
-)
+import "sync"
 
 func main() {
-	err := producer()
-	if err != nil {
-		log.Fatalf("%s", err.Error())
+	ch := make(chan Receiver)
+
+	go loadRecipient("mails.csv", ch)
+
+	var wg sync.WaitGroup
+	workers := 6
+
+	for i := 1; i <= workers; i++ {
+		wg.Add(1)
+		go emailWorker(i, ch, &wg)
 	}
+
+	wg.Wait()
 }
